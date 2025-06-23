@@ -139,7 +139,7 @@
           // 鼻（赤）と顎（青）を強調表示
           ctx.beginPath();
           ctx.arc(noseX, noseY, 6, 0, 2 * Math.PI);
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = 'green';
           ctx.fill();
 
           ctx.beginPath();
@@ -152,7 +152,7 @@
           let postureText = "";
           if (yDiff < 0.13) {
             postureText = "下を向いています";
-          } else if (yDiff > 0.20) {
+          } else if (yDiff > 0.18) {
             postureText = "上を向いています";
           } else {
             postureText = "まっすぐです";
