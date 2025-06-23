@@ -5,24 +5,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <style>
-    video, canvas {
-      width: 640px;
-      height: 480px;
-      transform: scaleX(-1); /* 鏡像にする */
-    }
-  </style>
-</head>
-<body>
-  <h1>顔向き判定：下を向いてる？1</h1>
-
-  <div id="container">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="canvas"></canvas>
-  </div>
-
-  <p id="result">判定中...</p>
-
-  <style>
     body {
       margin: 0;
       height: 100vh;
@@ -30,6 +12,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      font-family: sans-serif;
     }
 
     #container {
@@ -55,5 +38,75 @@
       text-align: center;
     }
   </style>
+</head>
+<body>
+  <h1>顔向き判定：下を向いてる？</h1>
+
+  <div id="container">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <p id="result">判定中...</p>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const result = document.getElementById('result');
+
+    const faceMesh = new FaceMesh({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    faceMesh.onResults((res) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
+        const landmarks = res.multiFaceLandmarks[0];
+
+        const nose = landmarks[1];     // 鼻先
+        const chin = landmarks[152];   // 顎先
+
+        // 座標をcanvas上に変換して描画
+        function drawPoint(landmark, color) {
+          const x = landmark.x * canvas.width;
+          const y = landmark.y * canvas.height;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }
+
+        drawPoint(nose, "red");   // 鼻を赤で描画
+        drawPoint(chin, "blue");  // 顎を青で描画
+
+        // Y座標の差で判定
+        const yDiff = chin.y - nose.y;
+        const threshold = 0.05;
+
+        result.textContent = yDiff > threshold
+          ? "下を向いています"
+          : "まっすぐ or 上向きです";
+      } else {
+        result.textContent = "顔が見つかりません";
+      }
+    });
+
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        await faceMesh.send({ image: video });
+      },
+      width: 640,
+      height: 480
+    });
+    camera.start();
+  </script>
 </body>
 </html>
