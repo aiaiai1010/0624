@@ -149,8 +149,14 @@
 
           // Y座標差による姿勢判定
           const yDiff = chin.y - nose.y;
-          const threshold = 0.15;
-          const postureText = yDiff < threshold ? "下を向いています" : "まっすぐ";
+          let postureText = "";
+          if (yDiff > 0.15) {
+            postureText = "下を向いています";
+          } else if (yDiff < 0.03) {
+            postureText = "上を向いています";
+          } else {
+            postureText = "まっすぐです";
+          }
 
           // 結果表示（傾き + 姿勢）
           output.textContent =
