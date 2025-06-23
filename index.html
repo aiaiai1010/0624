@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>顔向き検出</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <style>
+    video, canvas {
+      width: 640px;
+      height: 480px;
+      transform: scaleX(-1); /* 鏡像にする */
+    }
+  </style>
+</head>
 <body>
   <h1>顔向き判定：下を向いてる？</h1>
 
@@ -42,3 +56,4 @@
     }
   </style>
 </body>
+</html>
