@@ -40,7 +40,7 @@
   </style>
 </head>
 <body>
-  <h1>顔向き判定：下を向いてる？</h1>
+  <h1>顔向き判定：下を向いてる？1</h1>
 
   <div id="container">
     <video id="video" autoplay muted playsinline></video>
@@ -89,9 +89,9 @@
 
         // Y座標の差で判定
         const yDiff = chin.y - nose.y;
-        const threshold = 0.05;
+        const threshold = 0.15;
 
-        result.textContent = yDiff > threshold
+        result.textContent = yDiff < threshold
           ? "下を向いています"
           : "まっすぐ or 上向きです";
       } else {
@@ -103,8 +103,8 @@
       onFrame: async () => {
         await faceMesh.send({ image: video });
       },
-      width: 640,
-      height: 480
+      width: 480,
+      height: 640
     });
     camera.start();
   </script>
