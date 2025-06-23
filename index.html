@@ -45,7 +45,7 @@
 
         // Y座標の差を使って下向き判定（大まかな目安）
         const yDiff = chin.y - nose.y;
-        const threshold = 0.20; // 実験で調整
+        const threshold = 0.10; // 実験で調整
 
         result.textContent = yDiff < threshold
           ? "下を向いています"
