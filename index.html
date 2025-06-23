@@ -1,77 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>顔向き検出</title>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<body>
+  <h1>顔向き判定：下を向いてる？</h1>
+
+  <div id="container">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <p id="result">判定中...</p>
+
   <style>
-    video, canvas {
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #container {
+      position: relative;
       width: 640px;
       height: 480px;
-      transform: scaleX(-1); /* 鏡像にする */
     }
-  </style>
-</head>
-<body>
-  <h1>顔向き判定：下を向いてる？1</h1>
-  <video id="video" autoplay muted playsinline></video>
-  <canvas id="canvas"></canvas>
-  <p id="result">判定中...</p>
-  <style>
+
+    video, canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 640px;
+      height: 480px;
+      transform: scaleX(-1); /* 内カメラで左右反転 */
+      border: 1px solid #ccc;
+    }
+
     #result {
-      font-size: 48px; /* ← ここで文字の大きさを変更 */
-      font-weight: bold; /* 太字にする（任意） */
+      font-size: 48px;
+      font-weight: bold;
+      margin-top: 20px;
       text-align: center;
-      margin-top: 16px;
     }
   </style>
-
-
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const result = document.getElementById('result');
-
-    const faceMesh = new FaceMesh({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-    });
-
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
-
-    faceMesh.onResults((res) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
-        const landmarks = res.multiFaceLandmarks[0];
-
-        const nose = landmarks[1];     // 鼻先（もしくは4でもOK）
-        const chin = landmarks[152];   // 顎先
-
-        // Y座標の差を使って下向き判定（大まかな目安）
-        const yDiff = chin.y - nose.y;
-        const threshold = 0.15; // 実験で調整
-
-        result.textContent = yDiff < threshold
-          ? "下を向いています"
-          : "まっすぐ";
-      } else {
-        result.textContent = "顔が見つかりません";
-      }
-    });
-
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        await faceMesh.send({ image: video });
-      },
-      width: 640,
-      height: 480
-    });
-    camera.start();
-  </script>
 </body>
-</html>
