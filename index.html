@@ -13,10 +13,19 @@
   </style>
 </head>
 <body>
-  <h1>顔向き判定：下を向いてる？3</h1>
+  <h1>顔向き判定：下を向いてる？1</h1>
   <video id="video" autoplay muted playsinline></video>
   <canvas id="canvas"></canvas>
   <p id="result">判定中...</p>
+  <style>
+    #result {
+      font-size: 48px; /* ← ここで文字の大きさを変更 */
+      font-weight: bold; /* 太字にする（任意） */
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+
 
   <script>
     const video = document.getElementById('video');
