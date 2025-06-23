@@ -1,60 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>顔向き検出</title>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <title>傾き + 顔検出</title>
   <style>
     body {
-      margin: 0;
-      height: 100vh;
+      font-size: 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-family: sans-serif;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
     }
 
-    #container {
-      position: relative;
-      width: 640px;
-      height: 480px;
+    #content {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #startBtn {
+      font-size: 28px;
+      padding: 16px 32px;
+      margin: 10px;
     }
 
     video, canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
       width: 640px;
-      height: 480px;
-      transform: scaleX(-1); /* 内カメラで左右反転 */
+      height: 360px;
+      transform: scaleX(-1);
       border: 1px solid #ccc;
     }
 
-    #result {
-      font-size: 48px;
+    #output {
+      font-size: 32px;
       font-weight: bold;
-      margin-top: 20px;
-      text-align: center;
+      white-space: pre-line;
     }
   </style>
 </head>
 <body>
-  <h1>顔向き判定：下を向いてる？2</h1>
+  <h1>傾き + 顔検出</h1>
+  <button id="startBtn" style="display:none;">センサー取得開始</button>
+  <p id="output">読み取り中...</p>
 
-  <div id="container">
+  <div id="content">
     <video id="video" autoplay muted playsinline></video>
     <canvas id="canvas"></canvas>
   </div>
 
-  <p id="result">判定中...</p>
-
+  <!-- MediaPipeライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script>
+    const output = document.getElementById('output');
+    const btn = document.getElementById('startBtn');
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const result = document.getElementById('result');
 
+    let currentPitch = 0;
+    let currentRoll = 0;
+
+    // 傾きセンサ
+    function handleOrientation(event) {
+      const pitch = event.beta;
+      const roll = event.gamma;
+      if (pitch === null || roll === null) {
+        output.textContent = 'センサー値を取得できません。';
+        return;
+      }
+      currentPitch = pitch;
+      currentRoll = roll;
+    }
+
+    function startOrientation() {
+      window.addEventListener('deviceorientation', handleOrientation);
+      output.textContent = '読み取り中...';
+      btn.style.display = 'none';
+    }
+
+    // カメラ起動
+    async function initCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+      });
+      video.srcObject = stream;
+
+      video.addEventListener('loadedmetadata', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.style.width = `${video.videoWidth}px`;
+        canvas.style.height = `${video.videoHeight}px`;
+        video.style.width = `${video.videoWidth}px`;
+        video.style.height = `${video.videoHeight}px`;
+      });
+    }
+
+    // MediaPipe設定
     const faceMesh = new FaceMesh({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
     });
@@ -66,47 +113,90 @@
       minTrackingConfidence: 0.5
     });
 
-    faceMesh.onResults((res) => {
+    faceMesh.onResults(results => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
-        const landmarks = res.multiFaceLandmarks[0];
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-        const nose = landmarks[1];     // 鼻先
-        const chin = landmarks[152];   // 顎先
+      if (results.multiFaceLandmarks) {
+        for (const landmarks of results.multiFaceLandmarks) {
+          // 全ランドマーク（赤小点）
+          for (const pt of landmarks) {
+            ctx.beginPath();
+            ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 2, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+          }
 
-        // 座標をcanvas上に変換して描画
-        function drawPoint(landmark, color) {
-          const x = landmark.x * canvas.width;
-          const y = landmark.y * canvas.height;
+          // 鼻(1)と顎(152)のランドマーク
+          const nose = landmarks[1];
+          const chin = landmarks[152];
+
+          const noseX = nose.x * canvas.width;
+          const noseY = nose.y * canvas.height;
+          const chinX = chin.x * canvas.width;
+          const chinY = chin.y * canvas.height;
+
+          // 鼻（赤）と顎（青）を強調表示
           ctx.beginPath();
-          ctx.arc(x, y, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = color;
+          ctx.arc(noseX, noseY, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = 'red';
           ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(chinX, chinY, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = 'blue';
+          ctx.fill();
+
+          // Y座標差による姿勢判定
+          const yDiff = chin.y - nose.y;
+          const threshold = 0.05;
+          const postureText = yDiff > threshold ? "下を向いています" : "まっすぐ or 上向きです";
+
+          // 結果表示（傾き + 姿勢）
+          output.textContent =
+            `前後傾き（Pitch）: ${currentPitch.toFixed(2)}°\n` +
+            `左右傾き（Roll）: ${currentRoll.toFixed(2)}°\n` +
+            `顔向き: ${postureText}`;
         }
-
-        drawPoint(nose, "red");   // 鼻を赤で描画
-        drawPoint(chin, "blue");  // 顎を青で描画
-
-        // Y座標の差で判定
-        const yDiff = chin.y - nose.y;
-        const threshold = 0.15;
-
-        result.textContent = yDiff < threshold
-          ? "下を向いています"
-          : "まっすぐ or 上向きです";
       } else {
-        result.textContent = "顔が見つかりません";
+        output.textContent = "顔が見つかりません";
       }
     });
 
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        await faceMesh.send({ image: video });
-      },
-      width: 640,
-      height: 480
-    });
-    camera.start();
+    async function setup() {
+      if (
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function'
+      ) {
+        btn.style.display = 'inline-block';
+        btn.onclick = () => {
+          DeviceOrientationEvent.requestPermission().then(response => {
+            if (response === 'granted') {
+              startOrientation();
+            } else {
+              output.textContent = 'センサーの利用が許可されませんでした。';
+            }
+          }).catch(() => {
+            output.textContent = 'センサーの利用許可取得でエラーが発生しました。';
+          });
+        };
+      } else {
+        startOrientation();
+      }
+
+      await initCamera();
+
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          await faceMesh.send({ image: video });
+        },
+        width: 640,
+        height: 360
+      });
+      camera.start();
+    }
+
+    window.onload = setup;
   </script>
 </body>
 </html>
