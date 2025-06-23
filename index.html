@@ -152,7 +152,7 @@
           let postureText = "";
           if (yDiff < 0.15) {
             postureText = "下を向いています";
-          } else if (yDiff > 0.03) {
+          } else if (yDiff < 0.03) {
             postureText = "上を向いています";
           } else {
             postureText = "まっすぐです";
