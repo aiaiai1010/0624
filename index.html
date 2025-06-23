@@ -13,7 +13,7 @@
   </style>
 </head>
 <body>
-  <h1>顔向き判定：下を向いてる？</h1>
+  <h1>顔向き判定：下を向いてる？1</h1>
   <video id="video" autoplay muted playsinline></video>
   <canvas id="canvas"></canvas>
   <p id="result">判定中...</p>
@@ -45,7 +45,7 @@
 
         // Y座標の差を使って下向き判定（大まかな目安）
         const yDiff = chin.y - nose.y;
-        const threshold = 0.05; // 実験で調整
+        const threshold = 0.10; // 実験で調整
 
         result.textContent = yDiff > threshold
           ? "下を向いています"
