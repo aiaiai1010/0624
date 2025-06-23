@@ -43,7 +43,7 @@
   </style>
 </head>
 <body>
-  <h1>傾き + 顔検出</h1>
+  <h1>傾き + 顔検出1</h1>
   <button id="startBtn" style="display:none;">センサー取得開始</button>
   <p id="output">読み取り中...</p>
 
@@ -152,7 +152,7 @@
           let postureText = "";
           if (yDiff < 0.15) {
             postureText = "下を向いています";
-          } else if (yDiff > 0.3) {
+          } else if (yDiff > 0.2) {
             postureText = "上を向いています";
           } else {
             postureText = "まっすぐです";
