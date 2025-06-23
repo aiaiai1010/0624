@@ -17,8 +17,8 @@
 
     #container {
       position: relative;
-      width: 640px;
-      height: 480px;
+      width: 480px;
+      height: 640px;
     }
 
     video, canvas {
@@ -103,8 +103,8 @@
       onFrame: async () => {
         await faceMesh.send({ image: video });
       },
-      width: 480,
-      height: 640
+      width: 640,
+      height: 480
     });
     camera.start();
   </script>
